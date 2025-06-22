@@ -64,45 +64,31 @@ export default function Home() {
     }));
   };
 
-  const generateCitation = () => {
+  const generateCitation = async () => {
     if (!selectedStyle) return;
     
-    let formattedCitation = '';
-    
-    switch (selectedStyle) {
-      case 'MLA':
-        const mlaParts: string[] = [];
-        if (citation.author) mlaParts.push(citation.author + '.');
-        if (citation.title) mlaParts.push(`"${citation.title}."`);
-        if (citation.containerTitle) mlaParts.push(`${citation.containerTitle},`);
-        if (citation.otherContributors) mlaParts.push(citation.otherContributors + ',');
-        if (citation.version) mlaParts.push(citation.version + ',');
-        if (citation.number) mlaParts.push(citation.number + ',');
-        if (citation.publisher) mlaParts.push(citation.publisher + ',');
-        if (citation.publicationDate) mlaParts.push(citation.publicationDate + ',');
-        if (citation.location) mlaParts.push(citation.location + '.');
-        if (citation.url) mlaParts.push(`Web. ${citation.dateAccessed || 'Date'}. <${citation.url}>.`);
-        formattedCitation = mlaParts.join(' ');
-        break;
-        
-      case 'APA':
-        const apaParts: string[] = [];
-        if (citation.author) apaParts.push(citation.author);
-        if (citation.year) apaParts.push(`(${citation.year}).`);
-        if (citation.title) apaParts.push(`${citation.title}.`);
-        if (citation.containerTitle) apaParts.push(`${citation.containerTitle},`);
-        if (citation.volume) apaParts.push(`${citation.volume}${citation.issue ? `(${citation.issue})` : ''},`);
-        if (citation.pages) apaParts.push(`${citation.pages}.`);
-        if (citation.doi) apaParts.push(`https://doi.org/${citation.doi}`);
-        else if (citation.url) apaParts.push(citation.url);
-        formattedCitation = apaParts.join(' ');
-        break;
-        
-      default:
-        formattedCitation = 'Citation format coming soon...';
+    try {
+      const response = await fetch('http://localhost:8080/api/generate-citation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          style: selectedStyle,
+          data: citation
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate citation');
+      }
+
+      const result = await response.json();
+      setGeneratedCitation(result.citation);
+    } catch (error) {
+      console.error('Error generating citation:', error);
+      setGeneratedCitation('Error generating citation. Please try again.');
     }
-    
-    setGeneratedCitation(formattedCitation);
   };
 
   return (
